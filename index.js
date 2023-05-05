@@ -1,36 +1,79 @@
-import * as THREE from "https://unpkg.com/three@0.127.0/build/three.module.js"
-const canvas = document.querySelector(".webgl");
+import * as THREE from "https://unpkg.com/three@0.127.0/build/three.module.js";
+import { GLTFLoader } from "https://unpkg.com/three@0.127.0/examples/jsm/loaders/GLTFLoader.js";
+import { OrbitControls } from "https://unpkg.com/three@0.127.0/examples/jsm/controls/OrbitControls.js";
+// scene
 const scene = new THREE.Scene();
 
-const geometry = new THREE.BoxGeometry(1, 1, 1)
-const material = new THREE.MeshBasicMaterial({
-    color: 0x00ff00
-})
-
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh)
-
-
+// sizes
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
 
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100);
-camera.position.set(0, 1, 2)
-scene.add(camera)
+// obj loader
 
-const renderer = new THREE.WebGL1Renderer({
-    canvas: canvas
+const gltfLoader = new GLTFLoader();
+
+gltfLoader.load('assets/Final.gltf', (gltf) => {
+    gltf.scene.scale.set(3, 3, 3)
+    gltf.scene.position.y = -3
+    scene.add(gltf.scene);
+});
+
+
+
+// light
+const light = new THREE.PointLight(0xffffff, 1, 100)
+light.position.set(10, 10, 10)
+light.intensity = 2.55
+
+
+// camera 
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100);
+camera.position.z = 20;
+scene.add(camera)
+camera.add(light)
+
+// renderer
+const canvas = document.querySelector(".webgl");
+const renderer = new THREE.WebGLRenderer({ canvas })
+renderer.setSize(sizes.width, sizes.height)
+renderer.render(scene, camera)
+renderer.setPixelRatio(2)
+
+// controls
+
+
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.enableZoom = false;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 5
+controls.minPolarAngle = Math.PI / 2;
+controls.maxPolarAngle = Math.PI / 2;
+
+// resize
+window.addEventListener("resize", () => {
+    sizes.width = window.innerWidth
+    sizes.height = window.innerHeight
+    // update camera
+    camera.aspect = sizes.width / sizes.height
+    camera.updateProjectionMatrix();
+    renderer.setSize(sizes.width, sizes.height)
+
 })
 
-renderer.setSize(sizes.width, sizes.height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
 
-function animate() {
-    requestAnimationFrame(animate)
+const loop = () => {
+    controls.update();
     renderer.render(scene, camera)
+    window.requestAnimationFrame(loop)
 }
 
-animate();
+loop()
+
+
+
+
+
